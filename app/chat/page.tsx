@@ -35,91 +35,138 @@ export default function Page() {
     scrollToBottom()
   }, [messages])
 
-  const handleSendMessage = () => {
-    if (!input.trim()) return
+  const handleSendMessage = async () => {
+    if (!input.trim()) return;
 
     const userMessage: Message = {
       id: Date.now().toString(),
       type: "user",
       content: input,
       timestamp: new Date(),
-    }
-    setMessages((prev) => [...prev, userMessage])
-    setInput("")
+    };
 
-    setScanning(true)
-    setTimeout(() => {
+    setMessages((prev) => [...prev, userMessage]);
+    setInput("");
+    setScanning(true);
+
+    // Add "Scanning…" temporary message
+    const scanningMessage: Message = {
+      id: (Date.now() + 1).toString(),
+      type: "system",
+      content: "Scanning…",
+      timestamp: new Date(),
+    };
+    setMessages((prev) => [...prev, scanningMessage]);
+
+    try {
+
+      const res = await fetch("/api/scan", {
+        method: "POST",
+        headers: { "Content-Type": "application/json" },
+        body: JSON.stringify({ text: input }),
+      });
+
+      if (!res.ok) throw new Error("Scan API failed");
+
+      const data = await res.json();
+      const status = data.detail.severity as "safe" | "warning" | "blocked";
+
+      const resultMessage: Message = {
+        id: (Date.now() + 2).toString(),
+        type: "system",
+        content:
+          status === "safe"
+            ? "Scan Result: Safe ✓"
+            : status === "warning"
+            ? "Scan Result: Suspicious ⚠"
+            : "Scan Result: Blocked ✗",
+        status,
+        timestamp: new Date(),
+      };
+
+      // Replace scanning message with result
+      setMessages((prev) => prev.slice(0, -1).concat(resultMessage));
+    } catch (error) {
+      console.error("Scan failed:", error);
+
+      const errorMessage: Message = {
+        id: (Date.now() + 3).toString(),
+        type: "system",
+        content: "Scan failed. Please try again.",
+        status: "warning",
+        timestamp: new Date(),
+      };
+
+      setMessages((prev) => prev.slice(0, -1).concat(errorMessage));
+    } finally {
+      setScanning(false);
+    }
+  };
+
+  const handleFileUpload = async (e: React.ChangeEvent<HTMLInputElement>) => {
+    if (e.target.files?.[0]) {
+      const file = e.target.files[0];
+
+      const userMessage: Message = {
+        id: Date.now().toString(),
+        type: "user",
+        content: `📎 ${file.name}`,
+        timestamp: new Date(),
+      };
+      setMessages((prev) => [...prev, userMessage]);
+
+      setScanning(true);
+
       const scanningMessage: Message = {
         id: (Date.now() + 1).toString(),
         type: "system",
         content: "Scanning…",
         timestamp: new Date(),
-      }
-      setMessages((prev) => [...prev, scanningMessage])
+      };
+      setMessages((prev) => [...prev, scanningMessage]);
 
-      setTimeout(() => {
-        const results: ("safe" | "warning" | "blocked")[] = ["safe", "warning", "blocked"]
-        const status = results[Math.floor(Math.random() * results.length)]
+      try {
+        const formData = new FormData();
+        formData.append("file", file);
+
+        const response = await fetch("/api/scan/image", {
+          method: "POST",
+          body: formData,
+        });
+
+        const data = await response.json();
+
+        const status: "safe" | "blocked" = data.matched ? "blocked" : "safe";
+
         const resultMessage: Message = {
           id: (Date.now() + 2).toString(),
           type: "system",
           content:
             status === "safe"
               ? "Scan Result: Safe ✓"
-              : status === "warning"
-                ? "Scan Result: Suspicious ⚠"
-                : "Scan Result: Blocked ✗",
+              : "Scan Result: Blocked ✗",
           status,
           timestamp: new Date(),
-        }
-        setMessages((prev) => prev.slice(0, -1).concat(resultMessage))
-        setScanning(false)
-      }, 1000)
-    }, 500)
-  }
+        };
 
-  const handleFileUpload = (e: React.ChangeEvent<HTMLInputElement>) => {
-    if (e.target.files?.[0]) {
-      const file = e.target.files[0]
-      const userMessage: Message = {
-        id: Date.now().toString(),
-        type: "user",
-        content: `📎 ${file.name}`,
-        timestamp: new Date(),
-      }
-      setMessages((prev) => [...prev, userMessage])
+        setMessages((prev) => prev.slice(0, -1).concat(resultMessage));
+      } catch (error) {
+        console.error("Scan failed:", error);
 
-      setScanning(true)
-      setTimeout(() => {
-        const scanningMessage: Message = {
-          id: (Date.now() + 1).toString(),
+        const errorMessage: Message = {
+          id: (Date.now() + 3).toString(),
           type: "system",
-          content: "Scanning…",
+          content: "Scan failed. Please try again.",
+          status: "warning",
           timestamp: new Date(),
-        }
-        setMessages((prev) => [...prev, scanningMessage])
+        };
 
-        setTimeout(() => {
-          const results: ("safe" | "warning" | "blocked")[] = ["safe", "warning", "blocked"]
-          const status = results[Math.floor(Math.random() * results.length)]
-          const resultMessage: Message = {
-            id: (Date.now() + 2).toString(),
-            type: "system",
-            content:
-              status === "safe"
-                ? "Scan Result: Safe ✓"
-                : status === "warning"
-                  ? "Scan Result: Suspicious ⚠"
-                  : "Scan Result: Blocked ✗",
-            status,
-            timestamp: new Date(),
-          }
-          setMessages((prev) => prev.slice(0, -1).concat(resultMessage))
-          setScanning(false)
-        }, 1000)
-      }, 500)
+        setMessages((prev) => prev.slice(0, -1).concat(errorMessage));
+      } finally {
+        setScanning(false);
+      }
     }
-  }
+  };
 
   return (
     <>

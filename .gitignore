@@ -42,3 +42,5 @@ next-env.d.ts
 
 /public/Graphically Safe Images
 /public/Graphically Violent Images
+/uploads
+/public/uploads
