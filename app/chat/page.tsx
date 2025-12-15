@@ -5,6 +5,7 @@ import { useState, useRef, useEffect } from "react"
 import { Send, Upload } from "lucide-react"
 import ChatArea from "../components/ChatArea"
 import { Button } from "../components/Button"
+import { computePHashClient } from "@/lib/utils/pHashClient";
 
 interface Message {
   id: string
@@ -125,9 +126,53 @@ export default function Page() {
       };
       setMessages((prev) => [...prev, scanningMessage]);
 
+      // try {
+      //   const formData = new FormData();
+      //   formData.append("file", file);
+
+      //   const response = await fetch("/api/scan/image", {
+      //     method: "POST",
+      //     body: formData,
+      //   });
+
+      //   const data = await response.json();
+
+      //   const status: "safe" | "blocked" = data.matched ? "blocked" : "safe";
+
+      //   const resultMessage: Message = {
+      //     id: (Date.now() + 2).toString(),
+      //     type: "system",
+      //     content:
+      //       status === "safe"
+      //         ? "Scan Result: Safe ✓"
+      //         : "Scan Result: Blocked ✗",
+      //     status,
+      //     timestamp: new Date(),
+      //   };
+
+      //   setMessages((prev) => prev.slice(0, -1).concat(resultMessage));
+      // } catch (error) {
+      //   console.error("Scan failed:", error);
+
+      //   const errorMessage: Message = {
+      //     id: (Date.now() + 3).toString(),
+      //     type: "system",
+      //     content: "Scan failed. Please try again.",
+      //     status: "warning",
+      //     timestamp: new Date(),
+      //   };
+
+      //   setMessages((prev) => prev.slice(0, -1).concat(errorMessage));
+      // } finally {
+      //   setScanning(false);
+      // }
+
+      // v1
+
       try {
+        const imgHash = await computePHashClient(file);
         const formData = new FormData();
-        formData.append("file", file);
+        formData.append("imgHash", imgHash);
 
         const response = await fetch("/api/scan/image", {
           method: "POST",

@@ -1,6 +1,8 @@
 import { computePHash } from "./../utils/pHash";
 import phashes from "../../public/pHashes/phashes.json";
 
+// v1
+
 // Compute Hamming distance between two hex hashes
 function hammingDistance(hash1: string, hash2: string): number {
   // Convert hex strings to BigInt
@@ -43,4 +45,27 @@ export async function scanImage(filePath: string) {
     console.error("Failed to compute pHash", err);
     throw err;
   }
+}
+
+// v2
+
+export function comparePHashes(
+  userHash: string,
+  threshold: number = 10
+) {
+
+  for (const entry of phashes) {
+      const dist = hammingDistance(userHash, entry.phash);
+      if (dist <= threshold) {
+        return {
+          matched: true,
+          hammingDistance: dist,
+          reason: `Image similar to a known bad image`,
+        };
+      }
+    }
+
+  return {
+    matched: false,
+  };
 }
