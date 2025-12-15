@@ -1,6 +1,5 @@
 import { createCanvas, loadImage } from "canvas";
 
-// Adapt computePHash to Node.js: takes image path instead of File object
 export async function computePHash(imagePath: string): Promise<string> {
   const size = 32;
   const image = await loadImage(imagePath);
@@ -10,11 +9,9 @@ export async function computePHash(imagePath: string): Promise<string> {
   const ctx = canvas.getContext("2d");
   ctx.drawImage(image, 0, 0, size, size);
 
-  // Get image data and convert to grayscale matrix (similar to getResizedGrayscaleMatrix)
+  // Get image data and convert to grayscale matrix
   const imageData = ctx.getImageData(0, 0, size, size);
 
-  // We’ll need to slightly modify your toGrayscaleMatrix and dct2D to accept ImageData from canvas (or import them if already exported)
-  // For simplicity, create versions here or import your helpers
 
   function toGrayscaleMatrix(imageData: any, width: number, height: number): number[][] {
     const matrix: number[][] = [];
@@ -64,7 +61,7 @@ export async function computePHash(imagePath: string): Promise<string> {
   const grayMatrix = toGrayscaleMatrix(imageData, size, size);
   const dctMatrix = dct2D(grayMatrix);
 
-  // Extract 8x8 DCT block, skip DC coefficient
+  // Extract 8x8 DCT block
   const dctValues: number[] = [];
   for (let i = 0; i < 8; i++) {
     for (let j = 0; j < 8; j++) {
