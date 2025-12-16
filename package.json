@@ -9,6 +9,8 @@
     "lint": "eslint"
   },
   "dependencies": {
+    "@noble/curves": "^2.0.1",
+    "@noble/hashes": "^2.0.1",
     "blockhash-core": "^0.1.0",
     "canvas": "^3.2.0",
     "clsx": "^2.1.1",

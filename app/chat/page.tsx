@@ -6,6 +6,9 @@ import { Send, Upload } from "lucide-react"
 import ChatArea from "../components/ChatArea"
 import { Button } from "../components/Button"
 import { computePHashClient } from "@/lib/utils/pHashClient";
+import { blindHash, unblindToken } from "@/lib/utils/psiClient"
+import { localMatch } from "@/lib/scanner/imageHashScanner"
+import { blindPHash, unblindEvaluatedPoint } from "@/lib/client/oprfClient"
 
 interface Message {
   id: string
@@ -126,53 +129,12 @@ export default function Page() {
       };
       setMessages((prev) => [...prev, scanningMessage]);
 
-      // try {
-      //   const formData = new FormData();
-      //   formData.append("file", file);
-
-      //   const response = await fetch("/api/scan/image", {
-      //     method: "POST",
-      //     body: formData,
-      //   });
-
-      //   const data = await response.json();
-
-      //   const status: "safe" | "blocked" = data.matched ? "blocked" : "safe";
-
-      //   const resultMessage: Message = {
-      //     id: (Date.now() + 2).toString(),
-      //     type: "system",
-      //     content:
-      //       status === "safe"
-      //         ? "Scan Result: Safe ✓"
-      //         : "Scan Result: Blocked ✗",
-      //     status,
-      //     timestamp: new Date(),
-      //   };
-
-      //   setMessages((prev) => prev.slice(0, -1).concat(resultMessage));
-      // } catch (error) {
-      //   console.error("Scan failed:", error);
-
-      //   const errorMessage: Message = {
-      //     id: (Date.now() + 3).toString(),
-      //     type: "system",
-      //     content: "Scan failed. Please try again.",
-      //     status: "warning",
-      //     timestamp: new Date(),
-      //   };
-
-      //   setMessages((prev) => prev.slice(0, -1).concat(errorMessage));
-      // } finally {
-      //   setScanning(false);
-      // }
-
-      // v1
-
       try {
         const imgHash = await computePHashClient(file);
+        const { blindedHex, r } = blindPHash(imgHash);
+        
         const formData = new FormData();
-        formData.append("imgHash", imgHash);
+        formData.append("blindedPoint", blindedHex);
 
         const response = await fetch("/api/scan/image", {
           method: "POST",
@@ -180,8 +142,12 @@ export default function Page() {
         });
 
         const data = await response.json();
+        const unblindedToken = unblindEvaluatedPoint(data.evaluatedPoint, r);
 
-        const status: "safe" | "blocked" = data.matched ? "blocked" : "safe";
+        const result = localMatch(unblindedToken);
+        console.log("Local match result:", result);
+
+        const status: "safe" | "blocked" = result.matched ? "blocked" : "safe";
 
         const resultMessage: Message = {
           id: (Date.now() + 2).toString(),

@@ -1,8 +1,11 @@
 import { NextResponse } from "next/server";
 import fs from "fs";
 import path from "path";
-import { scanImage, comparePHashes } from "@/lib/scanner/imageHashScanner";
+// import { scanImage, comparePHashes } from "@/lib/scanner/imageHashScanner";
 import { revalidatePath } from "next/cache";
+import { scanBlindedHash } from "@/lib/scanner/imageHashScanner";
+import { Fk } from "@/lib/utils/serverKeyedTransform";
+import { evaluateBlindedPoint } from "@/lib/server/oprfServer";
 
 // v1
 // export async function POST(req: Request) {
@@ -55,19 +58,22 @@ import { revalidatePath } from "next/cache";
 export async function POST(req: Request) {
   try {
     const formData = await req.formData();
-    const imgHash = formData.get("imgHash") as string;
+    const blindedPoint = formData.get("blindedPoint") as string;
 
-    if (!imgHash) {
+    if (!blindedPoint) {
       return NextResponse.json(
         { error: "No hash provided" },
         { status: 400 }
       );
     }
 
-    // compare hashes
-    const scanResult = comparePHashes(imgHash);
+    console.log("Blinded Point in server: ", blindedPoint);
+    // const scanResult = scanBlindedHash(blindedHash);
+    // const transformedToken = Fk(blindedHash);
+    const evaluated = evaluateBlindedPoint(blindedPoint);
+    console.log("Evaluated Point: ", evaluated);
 
-    return NextResponse.json(scanResult);
+    return NextResponse.json({ evaluatedPoint: evaluated });
   } catch (err) {
     console.error("Error in scan:", err);
     return NextResponse.json(
