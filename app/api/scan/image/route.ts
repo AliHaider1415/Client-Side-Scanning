@@ -6,6 +6,7 @@ import { revalidatePath } from "next/cache";
 import { scanBlindedHash } from "@/lib/scanner/imageHashScanner";
 import { Fk } from "@/lib/utils/serverKeyedTransform";
 import { evaluateBlindedPoint } from "@/lib/server/oprfServer";
+import { addMAC } from "@/lib/security/messageAuth";
 
 // v1
 // export async function POST(req: Request) {
@@ -68,12 +69,18 @@ export async function POST(req: Request) {
     }
 
     console.log("Blinded Point in server: ", blindedPoint);
-    // const scanResult = scanBlindedHash(blindedHash);
-    // const transformedToken = Fk(blindedHash);
-    const evaluated = evaluateBlindedPoint(blindedPoint);
-    console.log("Evaluated Point: ", evaluated);
+    
+    // Evaluate with OPRF and generate proof
+    const { evaluatedPoint, proof } = evaluateBlindedPoint(blindedPoint);
+    console.log("Evaluated Point: ", evaluatedPoint);
 
-    return NextResponse.json({ evaluatedPoint: evaluated });
+    // Add MAC for integrity protection
+    const responseWithMAC = addMAC({
+      evaluatedPoint,
+      proof
+    });
+
+    return NextResponse.json(responseWithMAC);
   } catch (err) {
     console.error("Error in scan:", err);
     return NextResponse.json(

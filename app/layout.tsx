@@ -1,34 +1,36 @@
 import type React from "react"
 import type { Metadata } from "next"
-import { Geist, Geist_Mono } from "next/font/google"
+// import { Geist, Geist_Mono } from "next/font/google"
 // import { Analytics } from "@vercel/analytics/next"
 import "./globals.css"
 
-const _geist = Geist({ subsets: ["latin"] })
-const _geistMono = Geist_Mono({ subsets: ["latin"] })
+// Using system fonts instead of Google Fonts for offline compatibility
+// const _geist = Geist({ subsets: ["latin"] })
+// const _geistMono = Geist_Mono({ subsets: ["latin"] })
 
 export const metadata: Metadata = {
   title: "NudgeScan — Client-Side File Scanner",
   description:
     "Modern, elegant client-side file scanning system. Upload files, scan for threats, and get instant results.",
   generator: "v0.app",
-  icons: {
-    icon: [
-      {
-        url: "/icon-light-32x32.png",
-        media: "(prefers-color-scheme: light)",
-      },
-      {
-        url: "/icon-dark-32x32.png",
-        media: "(prefers-color-scheme: dark)",
-      },
-      {
-        url: "/icon.svg",
-        type: "image/svg+xml",
-      },
-    ],
-    apple: "/apple-icon.png",
-  },
+  // Icons commented out as they are not available in the project
+  // icons: {
+  //   icon: [
+  //     {
+  //       url: "/icon-light-32x32.png",
+  //       media: "(prefers-color-scheme: light)",
+  //     },
+  //     {
+  //       url: "/icon-dark-32x32.png",
+  //       media: "(prefers-color-scheme: dark)",
+  //     },
+  //     {
+  //       url: "/icon.svg",
+  //       type: "image/svg+xml",
+  //     },
+  //   ],
+  //   apple: "/apple-icon.png",
+  // },
 }
 
 export default function RootLayout({
@@ -38,7 +40,7 @@ export default function RootLayout({
 }>) {
   return (
     <html lang="en">
-      <body className={`font-sans antialiased`}>
+      <body className="font-sans antialiased" suppressHydrationWarning>
         <div className="flex flex-col h-screen bg-background">
           {children}
         </div>
